@@ -1,0 +1,5 @@
+
+
+poner transparente el statusBar
+class MainActivity - onCreate
+//window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
