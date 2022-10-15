@@ -7,12 +7,15 @@ import android.util.Log
 import android.widget.Toast
 import com.alex.ubercloneapp.utils.Config
 import com.alex.ubercloneapp.databinding.ActivityRegisterBinding
+import com.alex.ubercloneapp.models.Client
 import com.alex.ubercloneapp.providers.AuthProvider
+import com.alex.ubercloneapp.providers.ClientProvider
 
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
     private val authProvider = AuthProvider()
+    private val clientProvider = ClientProvider()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +39,23 @@ class RegisterActivity : AppCompatActivity() {
         if (isValidForm(name,lastName,email, phone,password,confirmPassword)){
             authProvider.register(email,password).addOnCompleteListener {
                 if (it.isSuccessful){
-                    Toast.makeText(this@RegisterActivity, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                    val client = Client(
+                        id = authProvider.getId(),
+                        name = name,
+                        lastname = lastName,
+                        phone = phone,
+                        email = email
+                    )
+
+                    clientProvider.create(client).addOnCompleteListener {
+                        if (it.isSuccessful){
+                            Toast.makeText(this@RegisterActivity, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                        }else{
+                            Toast.makeText(this@RegisterActivity, "Hubo un error en almacenar los datos del usuario ${it.exception.toString()}", Toast.LENGTH_SHORT).show()
+                            Log.d("Firebase", "Error: ${it.exception.toString()}")
+                        }
+                    }
+
                 }else{
                     Toast.makeText(this@RegisterActivity, "Registro fallido ${it.exception.toString()}", Toast.LENGTH_SHORT).show()
                     Log.d("Firebase", "Error: ${it.exception.toString()}")
@@ -87,7 +106,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun goToLogin(){
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
+        val i = Intent(this, MainActivity::class.java)
+        startActivity(i)
     }
 }
