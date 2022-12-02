@@ -50,6 +50,7 @@ class RegisterActivity : AppCompatActivity() {
                     clientProvider.create(client).addOnCompleteListener {
                         if (it.isSuccessful){
                             Toast.makeText(this@RegisterActivity, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                            goToMap()
                         }else{
                             Toast.makeText(this@RegisterActivity, "Hubo un error en almacenar los datos del usuario ${it.exception.toString()}", Toast.LENGTH_SHORT).show()
                             Log.d("Firebase", "Error: ${it.exception.toString()}")
@@ -62,6 +63,12 @@ class RegisterActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun goToMap(){
+        val i = Intent(this, MapActivity::class.java)
+        i.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(i)
     }
 
     private fun isValidForm(
