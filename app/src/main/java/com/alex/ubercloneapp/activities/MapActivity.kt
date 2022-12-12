@@ -18,8 +18,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivityMapBinding
+import com.alex.ubercloneapp.models.DriverLocation
 import com.alex.ubercloneapp.providers.AuthProvider
 import com.alex.ubercloneapp.providers.GeoProvider
+import com.alex.ubercloneapp.utils.CarMoveAnim
 import com.alex.ubercloneapp.utils.Config
 import com.example.easywaylocation.EasyWayLocation
 import com.example.easywaylocation.Listener
@@ -63,6 +65,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
     private var isLocationEnabled = false
 
     private val driversMarkers = ArrayList<Marker>()
+    private val driversLocation = ArrayList<DriverLocation>()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,7 +119,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
         if (myLocationLatLng == null) return
 
         //El radio son 10 kilometros - Este metodo es util para vendtly
-        geoProvider.getNearbyDrivers(myLocationLatLng!!, 10.0).addGeoQueryEventListener(object: GeoQueryEventListener{
+        geoProvider.getNearbyDrivers(myLocationLatLng!!, 5.0).addGeoQueryEventListener(object: GeoQueryEventListener{
 
             override fun onKeyEntered(documentID: String, location: GeoPoint) {
                 Log.d(TAG, "onKeyEntered: FireStore Document ID - $documentID")
@@ -141,6 +144,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
                 marker?.tag =  documentID
 
                 driversMarkers.add(marker!!)
+
+                val dl = DriverLocation()
+                dl.id = documentID
+                driversLocation.add(dl)
             }
 
             override fun onKeyExited(documentID: String) {
@@ -149,6 +156,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
                         if (marker.tag == documentID){
                             marker.remove()
                             driversMarkers.remove(marker)
+                            driversLocation.removeAt(getPositionDriver(documentID))
                             return
                         }
                     }
@@ -158,10 +166,22 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
             //Se ejecuta este metodo cuando la ubicación del conductor cambie (metodo en tiempo real)
             override fun onKeyMoved(documentID: String, location: GeoPoint) {
                 for (marker in driversMarkers){
+                    //Capturar posición inicial y final para animar la posición del conductor
+                    val start = LatLng(location.latitude, location.longitude)
+                    var end: LatLng? = null
+                    val position = getPositionDriver(marker.tag.toString())
+
                     //Si ya tiene definido una etiqueta
                     if (marker.tag != null){
                         if (marker.tag == documentID){
-                            marker.position = LatLng(location.latitude, location.longitude)
+//                            marker.position = LatLng(location.latitude, location.longitude)
+                            if (driversLocation[position].latlng != null){
+                                end = driversLocation[position].latlng
+                            }
+                            driversLocation[position].latlng = LatLng(location.latitude, location.longitude)
+                            if (end != null){
+                                CarMoveAnim.carAnim(marker, end, start)
+                            }
                         }
                     }
                 }
@@ -178,6 +198,16 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
         })
     }
 
+    private fun getPositionDriver(id:String): Int{
+        var position = 0
+        for (i in driversLocation.indices){
+            if (id == driversLocation[i].id){
+                position = i
+                break
+            }
+        }
+        return position
+    }
 
     private fun onCameraMove(){
         googleMap?.setOnCameraIdleListener { 
