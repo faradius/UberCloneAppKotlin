@@ -37,7 +37,9 @@ import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.firebase.firestore.GeoPoint
 import com.google.maps.android.SphericalUtil
+import org.imperiumlabs.geofirestore.callbacks.GeoQueryEventListener
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
     private val TAG = "LOCALIZACIÓN"
@@ -59,6 +61,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
     private var destinationLatLng:LatLng? = null
 
     private var isLocationEnabled = false
+
+    private val driversMarkers = ArrayList<Marker>()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +111,73 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
             }
         }
     }
+
+    private fun getNearbyDrivers(){
+        if (myLocationLatLng == null) return
+
+        //El radio son 10 kilometros - Este metodo es util para vendtly
+        geoProvider.getNearbyDrivers(myLocationLatLng!!, 10.0).addGeoQueryEventListener(object: GeoQueryEventListener{
+
+            override fun onKeyEntered(documentID: String, location: GeoPoint) {
+                Log.d(TAG, "onKeyEntered: FireStore Document ID - $documentID")
+                Log.d(TAG, "onKeyEntered: Location - $location")
+
+                for (marker in driversMarkers){
+                    if (marker.tag != null){
+                        if (marker.tag == documentID){
+                            return
+                        }
+                    }
+                }
+
+                //Creamos un nuevo marcador para el conductor conectado
+                val driverLatLng = LatLng(location.latitude, location.longitude)
+                val marker = googleMap?.addMarker(
+                    MarkerOptions().position(driverLatLng).title("Conductor disponible").icon(
+                        BitmapDescriptorFactory.fromResource(R.drawable.uber_car)
+                    )
+                )
+
+                marker?.tag =  documentID
+
+                driversMarkers.add(marker!!)
+            }
+
+            override fun onKeyExited(documentID: String) {
+                for (marker in driversMarkers){
+                    if (marker.tag != null){
+                        if (marker.tag == documentID){
+                            marker.remove()
+                            driversMarkers.remove(marker)
+                            return
+                        }
+                    }
+                }
+            }
+
+            //Se ejecuta este metodo cuando la ubicación del conductor cambie (metodo en tiempo real)
+            override fun onKeyMoved(documentID: String, location: GeoPoint) {
+                for (marker in driversMarkers){
+                    //Si ya tiene definido una etiqueta
+                    if (marker.tag != null){
+                        if (marker.tag == documentID){
+                            marker.position = LatLng(location.latitude, location.longitude)
+                        }
+                    }
+                }
+            }
+
+            override fun onGeoQueryError(exception: Exception) {
+
+            }
+
+            override fun onGeoQueryReady() {
+
+            }
+
+        })
+    }
+
 
     private fun onCameraMove(){
         googleMap?.setOnCameraIdleListener { 
@@ -260,6 +331,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
             googleMap?.moveCamera(CameraUpdateFactory.newCameraPosition(
                 CameraPosition.builder().target(myLocationLatLng!!).zoom(15f).build()
             ))
+            getNearbyDrivers()
             limitSearch()
         }
     }
