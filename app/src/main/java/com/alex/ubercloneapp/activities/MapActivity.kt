@@ -1,6 +1,7 @@
 package com.alex.ubercloneapp.activities
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -93,6 +95,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
         ))
 
         starGooglePlaces()
+        binding.btnRequestTrip.setOnClickListener { goToTripInfo() }
     }
 
     val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ permission ->
@@ -196,6 +199,16 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
             }
 
         })
+    }
+
+    private fun goToTripInfo(){
+
+        if (originLatLng != null && destinationLatLng != null){
+            val i = Intent(this, TripInfoActivity::class.java)
+            startActivity(i)
+        }else{
+            Toast.makeText(this, "Debes seleccionar el origen y el destino", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun getPositionDriver(id:String): Int{
