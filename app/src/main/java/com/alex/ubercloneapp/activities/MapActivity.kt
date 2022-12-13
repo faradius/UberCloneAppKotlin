@@ -25,6 +25,7 @@ import com.alex.ubercloneapp.providers.AuthProvider
 import com.alex.ubercloneapp.providers.GeoProvider
 import com.alex.ubercloneapp.utils.CarMoveAnim
 import com.alex.ubercloneapp.utils.Config
+import com.alex.ubercloneapp.utils.Constants
 import com.example.easywaylocation.EasyWayLocation
 import com.example.easywaylocation.Listener
 import com.google.android.gms.common.api.Status
@@ -205,6 +206,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
 
         if (originLatLng != null && destinationLatLng != null){
             val i = Intent(this, TripInfoActivity::class.java)
+            i.putExtra(Constants.ORIGIN, originName)
+            i.putExtra(Constants.DESTINATION, destinationName)
+            i.putExtra(Constants.ORIGIN_LAT, originLatLng?.latitude)
+            i.putExtra(Constants.ORIGIN_LNG, originLatLng?.longitude)
+            i.putExtra(Constants.DESTINATION_LAT, destinationLatLng?.latitude)
+            i.putExtra(Constants.DESTINATION_LNG, destinationLatLng?.longitude)
             startActivity(i)
         }else{
             Toast.makeText(this, "Debes seleccionar el origen y el destino", Toast.LENGTH_LONG).show()
