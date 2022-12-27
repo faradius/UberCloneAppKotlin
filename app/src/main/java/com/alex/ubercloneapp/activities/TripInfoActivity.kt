@@ -1,10 +1,12 @@
 package com.alex.ubercloneapp.activities
 
+import android.content.Intent
 import android.content.res.Resources
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivityTripInfoBinding
 import com.alex.ubercloneapp.models.Prices
@@ -91,6 +93,24 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
         Log.d(TAG, "Localizacion: Destination lng: ${destinationLatLng?.longitude}")
 
         binding.ivBack.setOnClickListener { finish() }
+
+        binding.btnConfirRequest.setOnClickListener { goToSearchDriver() }
+    }
+
+    private fun goToSearchDriver(){
+
+        if (originLatLng != null && destinationLatLng != null){
+            val i = Intent(this, SearchActivity::class.java)
+            i.putExtra(Constants.ORIGIN, extraOriginName)
+            i.putExtra(Constants.DESTINATION, extraDestinationName)
+            i.putExtra(Constants.ORIGIN_LAT, originLatLng?.latitude)
+            i.putExtra(Constants.ORIGIN_LNG, originLatLng?.longitude)
+            i.putExtra(Constants.DESTINATION_LAT, destinationLatLng?.latitude)
+            i.putExtra(Constants.DESTINATION_LNG, destinationLatLng?.longitude)
+            startActivity(i)
+        }else{
+            Toast.makeText(this, "Debes seleccionar el origen y el destino", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun getPrices(distance: Double, time: Double){
