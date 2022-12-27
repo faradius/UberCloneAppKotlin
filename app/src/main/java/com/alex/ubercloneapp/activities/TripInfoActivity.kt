@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.util.Log
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivityTripInfoBinding
+import com.alex.ubercloneapp.models.Prices
+import com.alex.ubercloneapp.providers.ConfigProvider
 import com.alex.ubercloneapp.utils.Config
 import com.alex.ubercloneapp.utils.Constants
 import com.example.easywaylocation.EasyWayLocation
@@ -45,6 +47,8 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
 
     private var markerOrigin: Marker? = null
     private var markerDestination: Marker? = null
+
+    private var configProvider = ConfigProvider()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +93,37 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
         binding.ivBack.setOnClickListener { finish() }
     }
 
+    private fun getPrices(distance: Double, time: Double){
+        configProvider.getPrices().addOnSuccessListener { document ->
+            if (document.exists()){
+                val prices = document.toObject(Prices::class.java) //Obtenemos la información del documento
+
+                val totalDistance = distance * prices?.km!!  //Valor por kilometro
+                Log.d("PRICES", "totalDistance: $totalDistance")
+
+                val totalTime = time * prices.min!!  //Valor por minuto
+                Log.d("PRICES", "TotalTime: $totalTime")
+
+                var total = totalDistance + totalTime
+                Log.d("PRICES", "total: $total")
+
+                total = if(total < 10.0) prices.minValue!! else total
+                Log.d("PRICES", "new total: $total")
+
+                var minTotal = total - prices.difference!!
+                Log.d("PRICES", "minTotal: $minTotal")
+                var maxTotal = total + prices.difference!!
+                Log.d("PRICES", "maxTotal: $maxTotal")
+
+                val minTotalString = String.format("%.1f", minTotal)
+                val maxTotalString = String.format("%.1f", maxTotal)
+
+                binding.tvPrice.text = "$$minTotalString - $$maxTotalString"
+
+            }
+        }
+    }
+
     private fun addOriginMarker(){
         markerOrigin = googleMap?.addMarker(MarkerOptions().position(originLatLng!!).title("Mi posición")
             .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons_location_person)))
@@ -123,7 +158,7 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
 
         googleMap?.moveCamera(
             CameraUpdateFactory.newCameraPosition(
-            CameraPosition.builder().target(originLatLng!!).zoom(13f).build()
+            CameraPosition.builder().target(originLatLng!!).zoom(14f).build()
         ))
         easyDrawRoute()
         addOriginMarker()
@@ -175,6 +210,8 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
 
         val timeString = String.format("%.2f", time)
         val distanceString = String.format("%.2f", distance)
+
+        getPrices(distance, time)
 
         binding.tvTimeAndDistance.text = "$timeString mins - $distanceString km"
 
