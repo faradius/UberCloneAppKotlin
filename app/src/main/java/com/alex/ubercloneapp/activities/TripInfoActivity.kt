@@ -164,6 +164,20 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
         polyLineDetailsMap: HashMap<String, PolyLineDataBean>,
         polyLineDetailsArray: ArrayList<PolyLineDataBean>
     ) {
+        var distance = polyLineDetailsArray[1].distance.toDouble() //Lo devuelve en metros
+        var time = polyLineDetailsArray[1].time.toDouble() //Lo devuelve en segundos
+
+        distance = if(distance < 1000.0) 1000.0 else distance // Si es menos de 1000 metros lo dejamos en 1 kilometro
+        time = if(time < 60.0) 60.0 else time
+
+        distance = distance / 1000 //KM
+        time = time / 60 //Min
+
+        val timeString = String.format("%.2f", time)
+        val distanceString = String.format("%.2f", distance)
+
+        binding.tvTimeAndDistance.text = "$timeString mins - $distanceString km"
+
         directionUtil.drawPath(WAY_POINT_TAG)
     }
 }
