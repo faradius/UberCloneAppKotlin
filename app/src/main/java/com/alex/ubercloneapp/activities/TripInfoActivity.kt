@@ -52,6 +52,9 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
 
     private var configProvider = ConfigProvider()
 
+    private var distance = 0.0
+    private var time = 0.0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityTripInfoBinding.inflate(layoutInflater)
@@ -107,6 +110,8 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
             i.putExtra(Constants.ORIGIN_LNG, originLatLng?.longitude)
             i.putExtra(Constants.DESTINATION_LAT, destinationLatLng?.latitude)
             i.putExtra(Constants.DESTINATION_LNG, destinationLatLng?.longitude)
+            i.putExtra(Constants.TIME, time)
+            i.putExtra(Constants.DISTANCE, distance)
             startActivity(i)
         }else{
             Toast.makeText(this, "Debes seleccionar el origen y el destino", Toast.LENGTH_LONG).show()
@@ -219,8 +224,8 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
         polyLineDetailsMap: HashMap<String, PolyLineDataBean>,
         polyLineDetailsArray: ArrayList<PolyLineDataBean>
     ) {
-        var distance = polyLineDetailsArray[1].distance.toDouble() //Lo devuelve en metros
-        var time = polyLineDetailsArray[1].time.toDouble() //Lo devuelve en segundos
+        distance = polyLineDetailsArray[1].distance.toDouble() //Lo devuelve en metros
+        time = polyLineDetailsArray[1].time.toDouble() //Lo devuelve en segundos
 
         distance = if(distance < 1000.0) 1000.0 else distance // Si es menos de 1000 metros lo dejamos en 1 kilometro
         time = if(time < 60.0) 60.0 else time

@@ -3,9 +3,12 @@ package com.alex.ubercloneapp.activities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivitySearchBinding
+import com.alex.ubercloneapp.models.Booking
 import com.alex.ubercloneapp.providers.AuthProvider
+import com.alex.ubercloneapp.providers.BookingProvider
 import com.alex.ubercloneapp.providers.GeoProvider
 import com.alex.ubercloneapp.utils.Config
 import com.alex.ubercloneapp.utils.Constants
@@ -22,6 +25,8 @@ class SearchActivity : AppCompatActivity() {
     private var extraOriginLng = 0.0
     private var extraDestinationLat = 0.0
     private var extraDestinationLng = 0.0
+    private var extraDistance = 0.0
+    private var extraTime = 0.0
 
     private var originLatLng: LatLng? = null
     private var destinationLatLng: LatLng? = null
@@ -35,6 +40,8 @@ class SearchActivity : AppCompatActivity() {
     private var isDriverFound = false
     private var driverLatLng:LatLng? = null
     private var limitRadius = 20
+
+    private val bookingProvider = BookingProvider()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,11 +57,37 @@ class SearchActivity : AppCompatActivity() {
         extraOriginLng = intent.getDoubleExtra(Constants.ORIGIN_LNG, 0.0)
         extraDestinationLat = intent.getDoubleExtra(Constants.DESTINATION_LAT, 0.0)
         extraDestinationLng = intent.getDoubleExtra(Constants.DESTINATION_LNG, 0.0)
+        extraTime = intent.getDoubleExtra(Constants.TIME, 0.0)
+        extraDistance = intent.getDoubleExtra(Constants.DISTANCE, 0.0)
 
         originLatLng = LatLng(extraOriginLat, extraOriginLng)
         destinationLatLng = LatLng(extraDestinationLat, extraDestinationLng)
 
         getClosesDriver()
+    }
+
+    private fun createBooking(idDriver: String){
+        val booking = Booking(
+            idClient = authProvider.getId(),
+            idDriver = idDriver,
+            status = "create",
+            destination = extraDestinationName,
+            origin = extraOriginName,
+            time = extraTime,
+            km = extraDistance,
+            originLat = extraOriginLat,
+            originLng = extraOriginLng,
+            destinationLat = extraDestinationLat,
+            destinationLng = extraDestinationLng
+        )
+
+        bookingProvider.create(booking).addOnCompleteListener {
+            if (it.isSuccessful){
+                Toast.makeText(this@SearchActivity, "Datos del viaje creados", Toast.LENGTH_LONG).show()
+            }else{
+                Toast.makeText(this@SearchActivity, "Error al crear los datos", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     //Este metodo busca a los alrededores del usuario en un radio determinado
@@ -68,6 +101,7 @@ class SearchActivity : AppCompatActivity() {
                     Log.d("FIRESTORE", "Conductor id: $idDriver")
                     driverLatLng = LatLng(location.latitude, location.longitude)
                     binding.tvSearch.text = "CONDUCTOR ENCONTRADO\nESPERANDO RESPUESTA"
+                    createBooking(documentID)
 
                 }
             }

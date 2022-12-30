@@ -8,6 +8,8 @@ object Constants {
     const val ORIGIN_LNG = "origin_lng"
     const val DESTINATION_LAT = "destination_lat"
     const val DESTINATION_LNG = "destination_lng"
+    const val TIME = "time"
+    const val DISTANCE = "distance"
 
 
 }
