@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivityMapBinding
+import com.alex.ubercloneapp.models.Booking
 import com.alex.ubercloneapp.models.DriverLocation
 import com.alex.ubercloneapp.providers.AuthProvider
 import com.alex.ubercloneapp.providers.BookingProvider
@@ -124,7 +125,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
     }
 
     private fun removeBooking(){
-        bookingProvider.remove()
+        bookingProvider.getBooking().get().addOnSuccessListener { document ->
+            if (document.exists()){
+                val booking = document.toObject(Booking::class.java)
+                if (booking?.status == "create" || booking?.status == "cancel"){
+                    bookingProvider.remove()
+                }
+            }
+        }
     }
 
     private fun getNearbyDrivers(){

@@ -25,6 +25,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 
+//Listener y DirectionCallBack es necesario para trazar la ruta
 class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, DirectionUtil.DirectionCallBack {
 
     val TAG = "TripInfoActivity"
@@ -43,6 +44,7 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
     private var originLatLng: LatLng? = null
     private var destinationLatLng: LatLng? = null
 
+    //Esto es para trazar la ruta
     private var wayPoints: ArrayList<LatLng> = ArrayList()
     private val WAY_POINT_TAG = "way_point_tag"
     private lateinit var directionUtil: DirectionUtil
@@ -159,6 +161,7 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
             .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons_pin)))
     }
 
+    //Este metodo permite dibujar la ruta
     private fun easyDrawRoute(){
         wayPoints.add(originLatLng!!)
         wayPoints.add(destinationLatLng!!)
@@ -240,6 +243,7 @@ class TripInfoActivity : AppCompatActivity(), OnMapReadyCallback, Listener, Dire
 
         binding.tvTimeAndDistance.text = "$timeString mins - $distanceString km"
 
+        //Hace la llamada del metodo para dibujar la ruta
         directionUtil.drawPath(WAY_POINT_TAG)
     }
 }
