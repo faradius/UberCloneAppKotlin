@@ -11,5 +11,6 @@ object Constants {
     const val TIME = "time"
     const val DISTANCE = "distance"
 
+    const val PRICE = "price"
 
 }
