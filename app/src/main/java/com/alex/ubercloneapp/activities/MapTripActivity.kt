@@ -45,6 +45,7 @@ import com.google.firebase.firestore.ListenerRegistration
 class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
     DirectionUtil.DirectionCallBack {
 
+    private var listenerDriverLocation: ListenerRegistration? = null
     private var driverLocation: LatLng? = null
     private var endLatLng: LatLng? = null
     private var startLatLng: LatLng? = null
@@ -128,7 +129,7 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
 
     private fun getLocationDriver() {
         if (booking != null) {
-            geoProvider.getLocationWorking(booking?.idDriver!!)
+            listenerDriverLocation = geoProvider.getLocationWorking(booking?.idDriver!!)
                 .addSnapshotListener { document, error ->
                     if (error != null) {
                         Log.d("FIRESTORE", "Error: ${error.message}")
@@ -140,27 +141,29 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
                         endLatLng = driverLocation
                     }
 
-                    //nos trae la información de la latitud y logitud en forma de arreglo y para acceder
-                    //a los datos es necesario convertirlo en una lista
-                    var l = document?.get("l") as List<*>
-                    val lat = l[0] as Double
-                    val lng = l[1] as Double
+                    if (document?.exists()!!) {
+                        //nos trae la información de la latitud y logitud en forma de arreglo y para acceder
+                        //a los datos es necesario convertirlo en una lista
+                        var l = document?.get("l") as List<*>
+                        val lat = l[0] as Double
+                        val lng = l[1] as Double
 
-                    driverLocation = LatLng(lat, lng)
+                        driverLocation = LatLng(lat, lng)
 
-                    //Cuando al se esta ejecutando en tiempo real y solo se quiere que se ejecute una sola vez
-                    //podemos hacer esta validación dentro de un addSnapshotListener
-                    if (!isDriverLocationFound) {
-                        isDriverLocationFound = true
-                        addDriverMarker(driverLocation!!)
-                        easyDrawRoute(driverLocation!!, originLatLng!!)
+                        //Cuando al se esta ejecutando en tiempo real y solo se quiere que se ejecute una sola vez
+                        //podemos hacer esta validación dentro de un addSnapshotListener
+                        if (!isDriverLocationFound && driverLocation != null) {
+                            isDriverLocationFound = true
+                            addDriverMarker(driverLocation!!)
+                            easyDrawRoute(driverLocation!!, originLatLng!!)
+                        }
+
+                        if (endLatLng != null) {
+                            CarMoveAnim.carAnim(markerDriver!!, endLatLng!!, driverLocation!!)
+                        }
+
+                        Log.d("FIRESTORE", "LOCATION: $l")
                     }
-
-                    if (endLatLng != null) {
-                        CarMoveAnim.carAnim(markerDriver!!, endLatLng!!, driverLocation!!)
-                    }
-
-                    Log.d("FIRESTORE", "LOCATION: $l")
                 }
         }
 
@@ -178,7 +181,7 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
             booking = document?.toObject(Booking::class.java)
 
             //Para que se ejecute una sola vez
-            if (!isBookingLoaded){
+            if (!isBookingLoaded) {
                 isBookingLoaded = true
                 originLatLng = LatLng(booking?.originLat!!, booking?.originLng!!)
                 destinationLatLng = LatLng(booking?.destinationLat!!, booking?.destinationLng!!)
@@ -201,14 +204,15 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
         }
     }
 
-    private fun finishTrip(){
+    private fun finishTrip() {
+        listenerDriverLocation?.remove()
         binding.tvStatus.text = "Finalizado"
         val i = Intent(this, MapActivity::class.java)
         i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(i)
     }
 
-    private fun startTrip(){
+    private fun startTrip() {
         binding.tvStatus.text = "Iniciado"
         googleMap?.clear()
         if (driverLocation != null) {
@@ -276,6 +280,7 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
     override fun onDestroy() {
         super.onDestroy()
         listenerBooking?.remove()
+        listenerDriverLocation?.remove()
     }
 
     override fun onMapReady(map: GoogleMap) {
