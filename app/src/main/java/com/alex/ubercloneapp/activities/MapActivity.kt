@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivityMapBinding
+import com.alex.ubercloneapp.fragments.ModalBottomSheetMenu
 import com.alex.ubercloneapp.models.Booking
 import com.alex.ubercloneapp.models.DriverLocation
 import com.alex.ubercloneapp.providers.AuthProvider
@@ -73,6 +74,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
     private val driversMarkers = ArrayList<Marker>()
     private val driversLocation = ArrayList<DriverLocation>()
 
+    private val modalMenu = ModalBottomSheetMenu()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,6 +105,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
         removeBooking()
 
         binding.btnRequestTrip.setOnClickListener { goToTripInfo() }
+        binding.ivMenu.setOnClickListener { showModalMenu() }
     }
 
     val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ permission ->
@@ -122,6 +126,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
                 }
             }
         }
+    }
+
+    private fun showModalMenu(){
+        modalMenu.show(supportFragmentManager, ModalBottomSheetMenu.TAG)
     }
 
     private fun removeBooking(){
