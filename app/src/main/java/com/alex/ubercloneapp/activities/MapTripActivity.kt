@@ -22,6 +22,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 import com.alex.ubercloneapp.databinding.ActivityMapTripBinding
+import com.alex.ubercloneapp.fragments.ModalBottomSheetTripInfo
 import com.alex.ubercloneapp.models.Booking
 import com.alex.ubercloneapp.providers.AuthProvider
 import com.alex.ubercloneapp.providers.BookingProvider
@@ -77,6 +78,8 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
     private var isDriverLocationFound = false
     private var isBookingLoaded = false
 
+    private var modalTrip = ModalBottomSheetTripInfo()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapTripBinding.inflate(layoutInflater)
@@ -95,6 +98,8 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
         }
 
         easyWayLocation = EasyWayLocation(this, locationRequest, false, false, this)
+
+        binding.ivClientInfo.setOnClickListener { showModalInfo() }
 
         locationPermission.launch(
             arrayOf(
@@ -126,6 +131,18 @@ class MapTripActivity : AppCompatActivity(), OnMapReadyCallback, Listener,
                 }
             }
         }
+
+    private fun showModalInfo(){
+
+        if(booking != null){
+            val bundle = Bundle()
+            bundle.putString(Constants.BOOKING, booking?.toJson())
+            modalTrip.arguments = bundle
+            modalTrip.show(supportFragmentManager, ModalBottomSheetTripInfo.TAG)
+        }else{
+            Toast.makeText(this, "No se pudo cargar la información", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     private fun getLocationDriver() {
         if (booking != null) {
