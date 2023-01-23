@@ -25,6 +25,7 @@ import com.alex.ubercloneapp.models.Booking
 import com.alex.ubercloneapp.models.DriverLocation
 import com.alex.ubercloneapp.providers.AuthProvider
 import com.alex.ubercloneapp.providers.BookingProvider
+import com.alex.ubercloneapp.providers.ClientProvider
 import com.alex.ubercloneapp.providers.GeoProvider
 import com.alex.ubercloneapp.utils.CarMoveAnim
 import com.alex.ubercloneapp.utils.Config
@@ -58,6 +59,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
     private var myLocationLatLng: LatLng? = null
     private val geoProvider = GeoProvider()
     private val authProvider = AuthProvider()
+    private val clientProvider = ClientProvider()
     private val bookingProvider = BookingProvider()
 
     //GOOGLE PLACES
@@ -103,6 +105,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
 
         starGooglePlaces()
         removeBooking()
+        createToke()
 
         binding.btnRequestTrip.setOnClickListener { goToTripInfo() }
         binding.ivMenu.setOnClickListener { showModalMenu() }
@@ -126,6 +129,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,Listener {
                 }
             }
         }
+    }
+
+    private fun createToke(){
+        clientProvider.createToken(authProvider.getId())
     }
 
     private fun showModalMenu(){

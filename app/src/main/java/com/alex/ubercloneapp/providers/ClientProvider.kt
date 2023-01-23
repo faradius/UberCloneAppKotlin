@@ -7,6 +7,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
@@ -38,6 +39,24 @@ class ClientProvider {
 
     fun getImageUrl(): Task<Uri> {
         return storage.downloadUrl
+    }
+
+    fun createToken(idClient: String){
+        FirebaseMessaging.getInstance().token.addOnCompleteListener {
+            if (it.isSuccessful){
+                //Trae el token de notificaciones y es necesario para el envio de notificaciones
+                //de dispositivo a dispositivo
+                val token = it.result
+                updateToken(idClient, token)
+            }
+        }
+    }
+
+    fun updateToken(idClient:String, token:String): Task<Void> {
+        val map: MutableMap<String, Any> = HashMap()
+
+        map["token"] = token
+        return db.document(idClient).update(map)
     }
 
     fun update(client:Client): Task<Void> {
