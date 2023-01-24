@@ -8,9 +8,10 @@ import android.widget.Toast
 import com.alex.ubercloneapp.R
 import com.alex.ubercloneapp.databinding.ActivitySearchBinding
 import com.alex.ubercloneapp.models.Booking
-import com.alex.ubercloneapp.providers.AuthProvider
-import com.alex.ubercloneapp.providers.BookingProvider
-import com.alex.ubercloneapp.providers.GeoProvider
+import com.alex.ubercloneapp.models.Driver
+import com.alex.ubercloneapp.models.FCMBody
+import com.alex.ubercloneapp.models.FCMResponse
+import com.alex.ubercloneapp.providers.*
 import com.alex.ubercloneapp.utils.Config
 import com.alex.ubercloneapp.utils.Constants
 import com.google.android.gms.maps.model.LatLng
@@ -18,6 +19,9 @@ import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.toObject
 import org.imperiumlabs.geofirestore.callbacks.GeoQueryEventListener
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class SearchActivity : AppCompatActivity() {
     private var listenerBooking: ListenerRegistration? = null
@@ -38,10 +42,13 @@ class SearchActivity : AppCompatActivity() {
     private val geoProvider = GeoProvider()
     private val authProvider = AuthProvider()
     private val bookingProvider = BookingProvider()
+    private val notificationProvider = NotificationProvider()
+    private val driverProvider = DriverProvider()
 
     //Busqueda del conductor
     private var radius = 0.1
     private var idDriver = ""
+    private var driver:Driver? = null
     private var isDriverFound = false
     private var driverLatLng:LatLng? = null
     private var limitRadius = 20
@@ -68,6 +75,39 @@ class SearchActivity : AppCompatActivity() {
 
         getClosesDriver()
         checkIfDriverAccept()
+    }
+
+    private fun sendNotification(){
+
+        val map = HashMap<String, String>()
+        map.put("title", "Solicitud de viaje")
+        map.put("body", "Un cliente esta solicitando un viaje a ${String.format("%.1f", extraDistance)}km y ${String.format("%.1f", extraTime)}Min")
+
+        val body = FCMBody(
+            to = driver?.token!!,
+            priority = "high",
+            ttl = "4500s",
+            data = map
+        )
+        notificationProvider.sendNotification(body).enqueue(object: Callback<FCMResponse> {
+            override fun onResponse(call: Call<FCMResponse>, response: Response<FCMResponse>) {
+                if (response.body() != null){
+                    if(response.body()!!.success == 1){
+                        Toast.makeText(this@SearchActivity, "Se envio la notificación", Toast.LENGTH_LONG).show()
+                    }else{
+                        Toast.makeText(this@SearchActivity, "No se pudo enviar la notificación", Toast.LENGTH_LONG).show()
+                    }
+                }
+                else{
+                    Toast.makeText(this@SearchActivity, "Hubo un error enviando la notificación", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onFailure(call: Call<FCMResponse>, t: Throwable) {
+                Log.d("Notification", "Error: ${t.message}")
+            }
+
+        })
     }
 
     private fun checkIfDriverAccept(){
@@ -133,6 +173,15 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
+    private fun getDriverInfo(){
+        driverProvider.getDriver(idDriver).addOnSuccessListener { document ->
+            if(document.exists()){
+                driver = document.toObject(Driver::class.java)
+                sendNotification()
+            }
+        }
+    }
+
     //Este metodo busca a los alrededores del usuario en un radio determinado
     private fun getClosesDriver(){
         geoProvider.getNearbyDrivers(originLatLng!!, radius).addGeoQueryEventListener(object: GeoQueryEventListener{
@@ -141,6 +190,7 @@ class SearchActivity : AppCompatActivity() {
                 if (!isDriverFound){
                     isDriverFound = true
                     idDriver = documentID
+                    getDriverInfo()
                     Log.d("FIRESTORE", "Conductor id: $idDriver")
                     driverLatLng = LatLng(location.latitude, location.longitude)
                     binding.tvSearch.text = "CONDUCTOR ENCONTRADO\nESPERANDO RESPUESTA"
