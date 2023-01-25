@@ -83,6 +83,8 @@ class SearchActivity : AppCompatActivity() {
         map.put("title", "Solicitud de viaje")
         map.put("body", "Un cliente esta solicitando un viaje a ${String.format("%.1f", extraDistance)}km y ${String.format("%.1f", extraTime)}Min")
 
+        map.put("idBooking", authProvider.getId())
+
         val body = FCMBody(
             to = driver?.token!!,
             priority = "high",
